@@ -1,0 +1,198 @@
+---
+import Icon from './Icon.astro';
+import Price from './Price.astro';
+import { discount, imageUrl, type Product } from '../lib/catalog';
+import { useT, href, type Lang } from '../i18n/ui';
+
+interface Props {
+  product: Product;
+  lang: Lang;
+  eager?: boolean;
+}
+
+const { product: p, lang, eager } = Astro.props;
+const t = useT(lang);
+const url = href(lang, `/product/${p.slug}/`);
+const off = discount(p);
+const isNew = p.collections.includes('new');
+const soldOut = p.stock <= 0;
+---
+
+<article
+  class:list={['card', { 'is-sold-out': soldOut }]}
+  data-product
+  data-id={p.id}
+  data-price={p.price}
+  data-brand={p.brand ?? ''}
+  data-stock={p.stock}
+  data-discount={off}
+  data-sort={p.sort}
+  data-search={`${p.title} ${p.brand ?? ''}`.toLowerCase()}
+>
+  <a class="media" href={url} tabindex="-1" aria-hidden="true">
+    <img
+      src={imageUrl(p, 0, 400)}
+      srcset={`${imageUrl(p, 0, 400)} 400w, ${imageUrl(p, 0, 900)} 900w`}
+      sizes="(max-width: 560px) 50vw, 300px"
+      alt=""
+      width="400"
+      height="400"
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+    />
+    <span class="badges">
+      {off > 0 && <span class="badge badge-sale">−{off}%</span>}
+      {isNew && <span class="badge badge-new">{t('product.new')}</span>}
+    </span>
+  </a>
+  <div class="body">
+    {p.brand && <p class="brand">{p.brand}</p>}
+    <h3 class="title"><a href={url}>{p.title}</a></h3>
+    <Price price={p.price} old={p.priceOld} />
+    {
+      soldOut ? (
+        <button class="btn btn-block add" type="button" disabled>
+          {t('product.soldOut')}
+        </button>
+      ) : (
+        <button class="btn btn-block add" type="button" data-add-to-cart={p.id} data-max={p.stock}>
+          <Icon name="cart" size={20} />
+          <span>{t('product.addToCart')}</span>
+        </button>
+      )
+    }
+  </div>
+</article>
+
+<script>
+  import { addToCart } from '../scripts/cart';
+
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-add-to-cart]');
+    if (!btn) return;
+    const qtyInput = btn.dataset.qtyFrom ? document.querySelector<HTMLInputElement>(btn.dataset.qtyFrom) : null;
+    addToCart(btn.dataset.addToCart!, qtyInput ? Number(qtyInput.value) || 1 : 1, Number(btn.dataset.max) || Infinity);
+    btn.classList.add('is-added');
+    setTimeout(() => btn.classList.remove('is-added'), 900);
+    window.dispatchEvent(new CustomEvent('cart:added'));
+  });
+</script>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+  }
+  .media {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--white);
+  }
+  .media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .is-sold-out .media img {
+    opacity: 0.55;
+  }
+  .badges {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .badge-sale {
+    background: var(--berry);
+    color: var(--white);
+  }
+  .badge-new {
+    background: var(--green);
+    color: var(--white);
+  }
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    padding: 14px 16px 16px;
+    border-top: 1px solid #f0efe8;
+  }
+  .brand {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .title {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .title a {
+    text-decoration: none;
+  }
+  .title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .card {
+    position: relative;
+  }
+  .title a:hover {
+    color: var(--green);
+  }
+  .add {
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .body :global(.price) {
+    margin-bottom: 10px;
+  }
+  .add:global(.is-added) {
+    --btn-bg: var(--pink);
+    --btn-fg: var(--green-900);
+  }
+  @media (max-width: 560px) {
+    .body {
+      padding: 12px;
+    }
+    .title {
+      font-size: 14px;
+    }
+    .add :global(svg) {
+      display: none;
+    }
+  }
+</style>

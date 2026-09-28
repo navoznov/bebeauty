@@ -1,0 +1,140 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { useT, href, asset, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Page path without language prefix, e.g. "/catalog/". Used for hreflang and the language switch. */
+  path: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  noindex?: boolean;
+}
+
+const { lang, path, title, description, image, noindex } = Astro.props;
+const t = useT(lang);
+const fullTitle = title ? `${title} — BeBeauty` : t('meta.title');
+const desc = description || t('meta.description');
+const site = Astro.site!;
+const canonical = new URL(href(lang, path), site).href;
+const ogImage = new URL(image || asset('og.jpg'), site).href;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ru" href={new URL(href('ru', path), site).href} />
+    <link rel="alternate" hreflang="en" href={new URL(href('en', path), site).href} />
+    <link rel="alternate" hreflang="x-default" href={new URL(href('ru', path), site).href} />
+    <link rel="icon" href={asset('favicon.png')} type="image/png" />
+    <link rel="apple-touch-icon" href={asset('apple-touch-icon.png')} />
+    <meta name="theme-color" content="#126662" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BeBeauty" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content={lang === 'ru' ? 'ru_RU' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t('skip')}</a>
+    <Header lang={lang} path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+
+    <div class="toast" role="status" aria-live="polite" hidden>
+      <span class="toast-text">{t('toast.added')}</span>
+      <a class="toast-link" href={href(lang, '/cart/')}>{t('toast.goCart')}</a>
+    </div>
+
+    <script>
+      import { readCart, cartCount } from '../scripts/cart';
+
+      function renderCount() {
+        const n = cartCount(readCart());
+        document.querySelectorAll<HTMLElement>('[data-cart-count]').forEach((el) => {
+          el.textContent = String(n);
+          el.hidden = n === 0;
+        });
+      }
+      renderCount();
+      window.addEventListener('cart:change', renderCount);
+      window.addEventListener('storage', renderCount);
+
+      let timer: number | undefined;
+      window.addEventListener('cart:added', () => {
+        const toast = document.querySelector<HTMLElement>('.toast');
+        if (!toast) return;
+        toast.hidden = false;
+        requestAnimationFrame(() => toast.classList.add('is-visible'));
+        clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          toast.classList.remove('is-visible');
+          window.setTimeout(() => (toast.hidden = true), 250);
+        }, 3000);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: 16px;
+    top: -60px;
+    z-index: 100;
+    padding: 10px 16px;
+    background: var(--white);
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .skip-link:focus {
+    top: 12px;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 12px 12px 22px;
+    border-radius: 999px;
+    background: var(--green-900);
+    color: var(--white);
+    box-shadow: 0 10px 30px rgb(0 0 0 / 20%);
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    transition:
+      opacity 0.25s,
+      transform 0.25s;
+    white-space: nowrap;
+  }
+  .toast.is-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  .toast-link {
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: var(--pink);
+    color: var(--green-900);
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>

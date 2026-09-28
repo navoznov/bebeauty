@@ -1,0 +1,194 @@
+---
+import Icon from './Icon.astro';
+import Leaf from './Leaf.astro';
+import { useT, href, CONTACTS, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useT(lang);
+
+const benefits = [
+  { leaf: 6, text: t('benefit.1') },
+  { leaf: 7, text: t('benefit.2') },
+  { leaf: 8, text: t('benefit.3') },
+  { leaf: 9, text: t('benefit.4') },
+] as const;
+---
+
+<footer class="footer">
+  <div class="container">
+    <ul class="benefits">
+      {
+        benefits.map((b) => (
+          <li>
+            <Leaf variant={b.leaf} size={44} />
+            <span>{b.text}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="footer-main">
+    <div class="container footer-grid">
+      <div class="col-about">
+        <p class="brand">BeBeauty</p>
+        <p>{t('footer.about')}</p>
+        <div class="socials">
+          <a href={CONTACTS.instagramHref} aria-label="Instagram" target="_blank" rel="noopener"><Icon name="instagram" /></a>
+          <a href={CONTACTS.telegramHref} aria-label="Telegram" target="_blank" rel="noopener"><Icon name="telegram" /></a>
+          <a href={CONTACTS.phoneHref} aria-label="WhatsApp" target="_blank" rel="noopener"><Icon name="whatsapp" /></a>
+        </div>
+      </div>
+
+      <nav aria-label={t('footer.shop')}>
+        <p class="col-title">{t('footer.shop')}</p>
+        <a href={href(lang, '/catalog/')}>{t('catalog.all')}</a>
+        <a href={href(lang, '/catalog/new/')}>{t('nav.new')}</a>
+        <a href={href(lang, '/catalog/sale/')}>{t('nav.sale')}</a>
+        <a href={href(lang, '/catalog/made-in-georgia/')}>{t('nav.georgia')}</a>
+      </nav>
+
+      <nav aria-label={t('footer.help')}>
+        <p class="col-title">{t('footer.help')}</p>
+        <a href={href(lang, '/info/')}>{t('nav.info')}</a>
+        <a href={href(lang, '/returns/')}>{t('nav.returns')}</a>
+        <a href={href(lang, '/privacy/')}>{t('nav.privacy')}</a>
+        <a href={href(lang, '/contacts/')}>{t('nav.contacts')}</a>
+      </nav>
+
+      <div>
+        <p class="col-title">{t('footer.contacts')}</p>
+        <p class="contact"><Icon name="pin" size={20} /><span>{t('footer.address')}<br /><a href={CONTACTS.mapHref} target="_blank" rel="noopener">{t('footer.map')}</a></span></p>
+        <p class="contact"><Icon name="clock" size={20} /><span>{t('footer.hours')}</span></p>
+        <p class="contact"><Icon name="whatsapp" size={20} /><a href={CONTACTS.phoneHref} target="_blank" rel="noopener">{CONTACTS.phone}</a></p>
+      </div>
+    </div>
+    <div class="container copy">© 2021–{new Date().getFullYear()} BeBeauty</div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: 0;
+  }
+  .benefits {
+    list-style: none;
+    margin: 0;
+    padding: 28px clamp(20px, 3vw, 40px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    background: var(--pink);
+    color: var(--green);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .benefits li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 15px;
+    line-height: 1.35;
+    color: var(--green-900);
+  }
+  .footer-main {
+    background: var(--green);
+    color: var(--cream);
+    padding-block: 48px 24px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+    gap: 32px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .col-title {
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  nav {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+  }
+  nav a,
+  .contact a {
+    text-decoration: none;
+  }
+  nav a:hover,
+  .contact a:hover {
+    text-decoration: underline;
+  }
+  .contact {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .contact :global(svg) {
+    flex: none;
+    margin-top: 2px;
+    color: var(--pink);
+  }
+  .contact span a {
+    color: var(--pink);
+    font-size: 14px;
+  }
+  .socials {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .socials a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 10%);
+    transition: background-color 0.15s;
+  }
+  .socials a:hover {
+    background: var(--pink);
+    color: var(--green-900);
+  }
+  .copy {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgb(255 255 255 / 14%);
+    font-size: 13px;
+    opacity: 0.7;
+  }
+  @media (max-width: 900px) {
+    .benefits {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .col-about {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 520px) {
+    .benefits {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

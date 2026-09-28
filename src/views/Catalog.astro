@@ -1,0 +1,429 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { getProducts, getGroups, getCategories, getBrands, byAvailability, COLLECTIONS, type Collection } from '../lib/catalog';
+import { useT, href, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Category or collection slug; undefined for the full catalog. */
+  slug?: string;
+}
+
+const { lang, slug } = Astro.props;
+const t = useT(lang);
+const all = getProducts(lang);
+const isCollection = COLLECTIONS.includes(slug as Collection);
+const category = slug && !isCollection ? getCategories(lang).find((c) => c.slug === slug) : undefined;
+
+const products = all
+  .filter((p) => {
+    if (!slug) return true;
+    if (slug === 'sale') return p.priceOld || p.collections.includes('sale');
+    if (isCollection) return p.collections.includes(slug);
+    return p.categories.includes(slug);
+  })
+  .sort(byAvailability);
+
+const title = !slug ? t('catalog.all') : isCollection ? t(`coll.${slug}` as 'coll.new') : category!.title;
+const brands = getBrands(products);
+const groups = getGroups(lang);
+const path = slug ? `/catalog/${slug}/` : '/catalog/';
+const PAGE = 24;
+---
+
+<Base lang={lang} path={path} title={title}>
+  <div class="container catalog">
+    <nav class="crumbs" aria-label="breadcrumbs">
+      <a href={href(lang, '/')}>{t('nav.home')}</a>
+      <span aria-hidden="true">/</span>
+      {slug ? <a href={href(lang, '/catalog/')}>{t('catalog.title')}</a> : <span>{t('catalog.title')}</span>}
+      {slug && <span aria-hidden="true">/</span>}
+      {slug && <span>{title}</span>}
+    </nav>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <details class="cats" open>
+          <summary>
+            {t('catalog.categories')}
+            <Icon name="chevronDown" size={20} />
+          </summary>
+          <div class="cats-body">
+            <ul class="colls">
+              <li><a href={href(lang, '/catalog/')} aria-current={!slug ? 'page' : undefined}>{t('catalog.all')}</a></li>
+              {
+                COLLECTIONS.map((c) => (
+                  <li>
+                    <a href={href(lang, `/catalog/${c}/`)} aria-current={slug === c ? 'page' : undefined}>
+                      {t(`coll.${c}` as 'coll.new')}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+            {
+              groups.map((g) => (
+                <div class="cat-group">
+                  <p>{t(`group.${g.id}` as 'group.face')}</p>
+                  <ul>
+                    {g.categories.map((c) => (
+                      <li>
+                        <a href={href(lang, `/catalog/${c.slug}/`)} aria-current={slug === c.slug ? 'page' : undefined}>
+                          {c.title}
+                          <span class="count">{c.count}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
+            }
+          </div>
+        </details>
+      </aside>
+
+      <section class="results" data-page-size={PAGE}>
+        <div class="head">
+          <h1>{title}</h1>
+          <p class="found"><span data-found>{products.length}</span> {t('pcs')}</p>
+        </div>
+
+        <form class="toolbar" role="search" onsubmit="return false">
+          <label class="search">
+            <Icon name="search" size={20} />
+            <span class="visually-hidden">{t('nav.search')}</span>
+            <input class="input" id="search" type="search" name="q" placeholder={t('catalog.search')} autocomplete="off" />
+          </label>
+          {
+            brands.length > 1 && (
+              <label class="field-inline">
+                <span class="visually-hidden">{t('catalog.brand')}</span>
+                <select class="select" name="brand">
+                  <option value="">{t('catalog.brand.all')}</option>
+                  {brands.map((b) => (
+                    <option value={b}>{b}</option>
+                  ))}
+                </select>
+              </label>
+            )
+          }
+          <label class="field-inline">
+            <span class="visually-hidden">{t('catalog.sort')}</span>
+            <select class="select" name="sort">
+              <option value="">{t('catalog.sort.default')}</option>
+              <option value="price-asc">{t('catalog.sort.priceAsc')}</option>
+              <option value="price-desc">{t('catalog.sort.priceDesc')}</option>
+              <option value="discount">{t('catalog.sort.discount')}</option>
+            </select>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" name="stock" value="1" />
+            <span>{t('catalog.inStock')}</span>
+          </label>
+        </form>
+
+        <div class="product-grid" data-grid>
+          {products.map((p, i) => <ProductCard product={p} lang={lang} eager={i < 4} />)}
+        </div>
+
+        <div class="empty" data-empty hidden>
+          <p>{t('catalog.empty')}</p>
+          <button class="btn btn-outline" type="button" data-reset>{t('catalog.reset')}</button>
+        </div>
+
+        <div class="more">
+          <button class="btn btn-outline" type="button" data-more hidden>{t('catalog.more')}</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</Base>
+
+<script>
+  const results = document.querySelector<HTMLElement>('.results')!;
+  const form = results.querySelector<HTMLFormElement>('.toolbar')!;
+  const grid = results.querySelector<HTMLElement>('[data-grid]')!;
+  const moreBtn = results.querySelector<HTMLButtonElement>('[data-more]')!;
+  const empty = results.querySelector<HTMLElement>('[data-empty]')!;
+  const found = results.querySelector<HTMLElement>('[data-found]')!;
+  const pageSize = Number(results.dataset.pageSize);
+  const cards = [...grid.querySelectorAll<HTMLElement>('[data-product]')];
+  let limit = pageSize;
+
+  const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLSelectElement | null;
+
+  // Restore filters from the URL so that filtered views can be shared and survive "back".
+  const params = new URLSearchParams(location.search);
+  for (const name of ['q', 'brand', 'sort']) {
+    const el = field(name);
+    const v = params.get(name);
+    if (!el || !v) continue;
+    if (el instanceof HTMLSelectElement && ![...el.options].some((o) => o.value === v)) continue;
+    el.value = v;
+  }
+  (field('stock') as HTMLInputElement).checked = params.get('stock') === '1';
+
+  const num = (el: HTMLElement, key: string) => Number(el.dataset[key]);
+  const sorters: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
+    '': (a, b) => Number(num(b, 'stock') > 0) - Number(num(a, 'stock') > 0) || num(a, 'sort') - num(b, 'sort'),
+    'price-asc': (a, b) => num(a, 'price') - num(b, 'price'),
+    'price-desc': (a, b) => num(b, 'price') - num(a, 'price'),
+    discount: (a, b) => num(b, 'discount') - num(a, 'discount'),
+  };
+
+  function apply(resetLimit = false) {
+    if (resetLimit) limit = pageSize;
+    const q = (field('q')?.value || '').trim().toLowerCase();
+    const brand = field('brand')?.value || '';
+    const stock = (field('stock') as HTMLInputElement).checked;
+    const sort = field('sort')?.value || '';
+
+    const matched = cards
+      .filter((c) => (!q || c.dataset.search!.includes(q)) && (!brand || c.dataset.brand === brand) && (!stock || num(c, 'stock') > 0))
+      .sort(sorters[sort] || sorters['']);
+
+    const visible = new Set(matched.slice(0, limit));
+    for (const c of matched) grid.append(c);
+    for (const c of cards) c.hidden = !visible.has(c);
+
+    found.textContent = String(matched.length);
+    empty.hidden = matched.length > 0;
+    moreBtn.hidden = matched.length <= limit;
+
+    const url = new URL(location.href);
+    for (const [k, v] of Object.entries({ q, brand, sort, stock: stock ? '1' : '' })) {
+      if (v) url.searchParams.set(k, v);
+      else url.searchParams.delete(k);
+    }
+    history.replaceState(null, '', url);
+  }
+
+  form.addEventListener('input', () => apply(true));
+  moreBtn.addEventListener('click', () => {
+    limit += pageSize;
+    apply();
+  });
+  results.querySelector('[data-reset]')!.addEventListener('click', () => {
+    form.reset();
+    apply(true);
+  });
+
+  apply();
+  if (location.hash === '#search') field('q')?.focus();
+
+  // Keep the category list collapsed on small screens.
+  if (matchMedia('(max-width: 960px)').matches) document.querySelector('.cats')?.removeAttribute('open');
+</script>
+
+<style>
+  .catalog {
+    padding-block: 24px 72px;
+  }
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .crumbs a {
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .sidebar {
+    position: sticky;
+    top: 96px;
+    max-height: calc(100vh - 120px);
+    overflow: auto;
+    padding-right: 8px;
+  }
+  .cats summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    margin-bottom: 12px;
+  }
+  .cats summary::-webkit-details-marker {
+    display: none;
+  }
+  .cats[open] summary :global(svg) {
+    transform: rotate(180deg);
+  }
+  .cats ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .cats a {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 15px;
+  }
+  .cats a:hover {
+    background: var(--green-100);
+  }
+  .cats a[aria-current='page'] {
+    background: var(--green);
+    color: var(--white);
+  }
+  .count {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  a[aria-current='page'] .count {
+    color: inherit;
+    opacity: 0.8;
+  }
+  .colls {
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+    border-bottom: 1px solid var(--line) !important;
+    font-weight: 600;
+  }
+  .cat-group p {
+    margin: 12px 12px 4px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .head h1 {
+    font-size: clamp(30px, 4vw, 44px);
+    margin-bottom: 16px;
+    color: var(--green);
+  }
+  .found {
+    color: var(--muted);
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .search {
+    position: relative;
+    flex: 1 1 260px;
+  }
+  .search :global(svg) {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .search .input {
+    padding-left: 44px;
+  }
+  .field-inline {
+    flex: 0 1 220px;
+  }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--green);
+  }
+  .empty {
+    padding: 48px 24px;
+    text-align: center;
+    background: var(--white);
+    border-radius: var(--radius);
+  }
+  .more {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+  }
+
+  @media (max-width: 960px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .sidebar {
+      position: static;
+      max-height: none;
+      overflow: visible;
+      padding: 0;
+    }
+    .cats {
+      background: var(--white);
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--line);
+    }
+    .cats summary {
+      margin: 0;
+      padding: 12px 16px;
+      font-size: 18px;
+    }
+    .cats-body {
+      padding: 0 8px 12px;
+      columns: 2;
+      column-gap: 8px;
+    }
+    .colls,
+    .cat-group {
+      break-inside: avoid;
+    }
+  }
+  @media (max-width: 560px) {
+    .cats-body {
+      columns: 1;
+    }
+    .field-inline,
+    .toggle {
+      flex: 1 1 calc(50% - 6px);
+    }
+    .field-inline .select {
+      padding-left: 12px;
+      padding-right: 32px;
+      background-position: right 12px center;
+      font-size: 15px;
+    }
+    .toggle {
+      flex-basis: 100%;
+    }
+  }
+</style>

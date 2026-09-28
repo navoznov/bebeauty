@@ -1,0 +1,458 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Price from '../components/Price.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { getProducts, getCategories, byAvailability, discount, imageUrl, type Product } from '../lib/catalog';
+import { useT, href, CONTACTS, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  product: Product;
+}
+
+const { lang, product: p } = Astro.props;
+const t = useT(lang);
+const categories = getCategories(lang);
+const category = categories.find((c) => c.slug === p.categories[0]);
+const off = discount(p);
+const soldOut = p.stock <= 0;
+const plain = p.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+const longText = plain.length > 700;
+
+const related = getProducts(lang)
+  .filter((x) => x.id !== p.id && x.stock > 0 && x.categories.some((c) => p.categories.includes(c)))
+  .sort(byAvailability)
+  .slice(0, 8);
+
+const images = Array.from({ length: p.images }, (_, i) => i);
+const path = `/product/${p.slug}/`;
+const site = Astro.site!;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.title,
+  image: images.map((i) => new URL(imageUrl(p, i, 900), site).href),
+  description: plain.slice(0, 500),
+  ...(p.brand && { brand: { '@type': 'Brand', name: p.brand } }),
+  offers: {
+    '@type': 'Offer',
+    price: p.price,
+    priceCurrency: 'GEL',
+    availability: soldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+    url: new URL(href(lang, path), site).href,
+  },
+};
+---
+
+<Base lang={lang} path={path} title={p.title} description={plain.slice(0, 160)} image={imageUrl(p, 0, 900)}>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(jsonLd)} />
+
+  <div class="container page">
+    <nav class="crumbs" aria-label="breadcrumbs">
+      <a href={href(lang, '/')}>{t('nav.home')}</a>
+      <span aria-hidden="true">/</span>
+      <a href={href(lang, '/catalog/')}>{t('catalog.title')}</a>
+      {
+        category && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={href(lang, `/catalog/${category.slug}/`)}>{category.title}</a>
+          </>
+        )
+      }
+    </nav>
+
+    <div class="product">
+      <div class="gallery">
+        <div class="track" data-track tabindex="0" aria-label={t('product.photo')}>
+          {
+            images.map((i) => (
+              <img
+                src={imageUrl(p, i, 900)}
+                alt={i === 0 ? p.title : ''}
+                width="900"
+                height="900"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchpriority={i === 0 ? 'high' : undefined}
+              />
+            ))
+          }
+        </div>
+        {off > 0 && <span class="badge-sale">−{off}%</span>}
+        {
+          images.length > 1 && (
+            <>
+              <button class="nav-btn prev" type="button" data-prev aria-label={t('product.prev')}>
+                <Icon name="chevronLeft" />
+              </button>
+              <button class="nav-btn next" type="button" data-next aria-label={t('product.next')}>
+                <Icon name="chevronRight" />
+              </button>
+              <div class="thumbs">
+                {images.map((i) => (
+                  <button type="button" data-thumb={i} aria-label={`${t('product.photo')} ${i + 1}`} aria-current={i === 0 ? 'true' : undefined}>
+                    <img src={imageUrl(p, i, 400)} alt="" width="80" height="80" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            </>
+          )
+        }
+      </div>
+
+      <div class="info">
+        {
+          p.brand && (
+            <a class="brand" href={`${href(lang, '/catalog/')}?brand=${encodeURIComponent(p.brand)}`}>
+              {p.brand}
+            </a>
+          )
+        }
+        <h1>{p.title}</h1>
+        <Price price={p.price} old={p.priceOld} size="lg" />
+
+        <p class:list={['stock', { 'is-out': soldOut, 'is-low': !soldOut && p.stock <= 2 }]}>
+          <span class="dot" aria-hidden="true"></span>
+          {soldOut ? t('product.soldOut') : p.stock <= 2 ? t('product.fewLeft', { n: p.stock }) : t('product.inStock')}
+        </p>
+
+        {
+          soldOut ? (
+            <button class="btn btn-block" type="button" disabled>
+              {t('product.soldOut')}
+            </button>
+          ) : (
+            <div class="buy">
+              <div class="qty" role="group" aria-label={t('product.qty')}>
+                <button type="button" data-step="-1" aria-label={t('product.decrease')}>
+                  <Icon name="minus" size={20} />
+                </button>
+                <input id="qty" type="number" inputmode="numeric" min="1" max={p.stock} value="1" aria-label={t('product.qty')} />
+                <button type="button" data-step="1" aria-label={t('product.increase')}>
+                  <Icon name="plus" size={20} />
+                </button>
+              </div>
+              <button class="btn add" type="button" data-add-to-cart={p.id} data-max={p.stock} data-qty-from="#qty">
+                <Icon name="cart" size={20} />
+                {t('product.addToCart')}
+              </button>
+            </div>
+          )
+        }
+
+        <ul class="perks">
+          <li><Icon name="truck" size={22} /><span>{t('product.delivery')}</span></li>
+          <li><Icon name="store" size={22} /><span>{t('product.pickup')}</span></li>
+          <li>
+            <Icon name="whatsapp" size={22} />
+            <a href={CONTACTS.phoneHref} target="_blank" rel="noopener">{t('product.consult')}</a>
+          </li>
+        </ul>
+
+        {
+          p.description && (
+            <section class="desc">
+              <h2>{t('product.description')}</h2>
+              <div class:list={['prose', { clamp: longText }]} data-desc set:html={p.description} />
+              {longText && (
+                <button class="more" type="button" data-toggle data-more={t('product.readMore')} data-less={t('product.readLess')}>
+                  {t('product.readMore')}
+                </button>
+              )}
+            </section>
+          )
+        }
+      </div>
+    </div>
+
+    {
+      related.length > 0 && (
+        <section class="related">
+          <h2>{t('product.related')}</h2>
+          <div class="scroller">
+            {related.map((r) => (
+              <ProductCard product={r} lang={lang} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </div>
+</Base>
+
+<script>
+  const track = document.querySelector<HTMLElement>('[data-track]');
+  if (track) {
+    const thumbs = [...document.querySelectorAll<HTMLButtonElement>('[data-thumb]')];
+    const count = track.children.length;
+    const current = () => Math.round(track.scrollLeft / track.clientWidth);
+    const go = (i: number) => track.scrollTo({ left: ((i + count) % count) * track.clientWidth, behavior: 'smooth' });
+
+    thumbs.forEach((b) => b.addEventListener('click', () => go(Number(b.dataset.thumb))));
+    document.querySelector('[data-prev]')?.addEventListener('click', () => go(current() - 1));
+    document.querySelector('[data-next]')?.addEventListener('click', () => go(current() + 1));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') go(current() - 1);
+      if (e.key === 'ArrowRight') go(current() + 1);
+    });
+    track.addEventListener('scroll', () => {
+      const i = current();
+      thumbs.forEach((b, j) => (j === i ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+    });
+  }
+
+  const qty = document.querySelector<HTMLInputElement>('#qty');
+  document.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) =>
+    b.addEventListener('click', () => {
+      if (!qty) return;
+      const next = Number(qty.value) + Number(b.dataset.step);
+      qty.value = String(Math.min(Math.max(1, next), Number(qty.max)));
+    }),
+  );
+
+  const toggle = document.querySelector<HTMLButtonElement>('[data-toggle]');
+  toggle?.addEventListener('click', () => {
+    const desc = document.querySelector('[data-desc]')!;
+    const open = desc.classList.toggle('clamp');
+    toggle.textContent = open ? toggle.dataset.more! : toggle.dataset.less!;
+  });
+</script>
+
+<style>
+  .page {
+    padding-block: 24px 72px;
+  }
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .crumbs a {
+    text-decoration: none;
+  }
+  .crumbs a:hover {
+    text-decoration: underline;
+  }
+  .product {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(24px, 5vw, 64px);
+    align-items: start;
+  }
+  .gallery {
+    position: sticky;
+    top: 96px;
+  }
+  .track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    border-radius: var(--radius);
+    background: var(--white);
+    box-shadow: var(--shadow);
+  }
+  .track::-webkit-scrollbar {
+    display: none;
+  }
+  .track img {
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    scroll-snap-align: start;
+  }
+  .badge-sale {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--berry);
+    color: var(--white);
+    font-weight: 700;
+  }
+  .nav-btn {
+    position: absolute;
+    top: calc(50% - 40px);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 90%);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .prev {
+    left: 12px;
+  }
+  .next {
+    right: 12px;
+  }
+  .thumbs {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    overflow-x: auto;
+  }
+  .thumbs button {
+    flex: none;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--white);
+    cursor: pointer;
+  }
+  .thumbs button[aria-current='true'] {
+    border-color: var(--green);
+  }
+  .thumbs img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+  }
+
+  .brand {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--green);
+    text-decoration: none;
+  }
+  .brand:hover {
+    text-decoration: underline;
+  }
+  .info h1 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: clamp(24px, 2.6vw, 32px);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+  .stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 20px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .stock.is-low {
+    color: #b25e00;
+  }
+  .stock.is-out {
+    color: var(--muted);
+  }
+  .buy {
+    display: flex;
+    gap: 12px;
+  }
+  .qty {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    background: var(--white);
+  }
+  .qty button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 46px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--green);
+  }
+  .qty input {
+    width: 40px;
+    border: 0;
+    text-align: center;
+    font-weight: 600;
+    background: none;
+    -moz-appearance: textfield;
+  }
+  .qty input::-webkit-inner-spin-button {
+    display: none;
+  }
+  .add {
+    flex: 1;
+  }
+  .perks {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 18px 20px;
+    display: grid;
+    gap: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--cream);
+    font-size: 14px;
+  }
+  .perks li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .perks :global(svg) {
+    flex: none;
+    color: var(--green);
+  }
+  .perks a {
+    color: var(--green);
+    font-weight: 600;
+  }
+  .desc {
+    margin-top: 32px;
+  }
+  .desc h2 {
+    font-size: 24px;
+  }
+  .clamp {
+    max-height: 22em;
+    overflow: hidden;
+    mask-image: linear-gradient(#000 70%, transparent);
+  }
+  .more {
+    margin-top: 8px;
+    padding: 8px 0;
+    border: 0;
+    background: none;
+    color: var(--green);
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .related {
+    margin-top: 72px;
+  }
+
+  @media (max-width: 860px) {
+    .product {
+      grid-template-columns: 1fr;
+    }
+    .gallery {
+      position: relative;
+      top: 0;
+    }
+    .nav-btn {
+      display: none;
+    }
+  }
+</style>

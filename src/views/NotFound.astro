@@ -1,0 +1,35 @@
+---
+import Base from '../layouts/Base.astro';
+import Leaf from '../components/Leaf.astro';
+import { useT, href, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useT(lang);
+---
+
+<Base lang={lang} path="/404/" title={t('404.title')} noindex>
+  <div class="container nf">
+    <Leaf variant={5} size={96} />
+    <h1>{t('404.title')}</h1>
+    <p>{t('404.text')}</p>
+    <a class="btn" href={href(lang, '/catalog/')}>{t('cart.emptyCta')}</a>
+  </div>
+</Base>
+
+<style>
+  .nf {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    padding-block: 96px;
+    color: var(--green);
+  }
+  .nf :global(.leaf) {
+    color: var(--pink);
+    margin-bottom: 16px;
+  }
+</style>
