@@ -1,0 +1,188 @@
+{
+ "groups": [
+  {
+   "id": "face",
+   "slugs": [
+    "cleansers",
+    "makeup-removers",
+    "tonics-and-hydrolates",
+    "facial-serums",
+    "facial-creams",
+    "eye-creams-and-patches",
+    "peels-and-enzymes",
+    "spf",
+    "face-masks",
+    "lip-care"
+   ]
+  },
+  {
+   "id": "makeup",
+   "slugs": [
+    "decorative-cosmetics",
+    "brows-and-lashes"
+   ]
+  },
+  {
+   "id": "body",
+   "slugs": [
+    "body-scrubs",
+    "shower-gel",
+    "body-creams",
+    "natural-soap",
+    "deodorants",
+    "intimate-hygiene",
+    "toothpaste"
+   ]
+  },
+  {
+   "id": "hair",
+   "slugs": [
+    "shampoo",
+    "hair-care"
+   ]
+  },
+  {
+   "id": "home",
+   "slugs": [
+    "aroma-candles",
+    "massage-candles",
+    "room-spray",
+    "georgian-tea",
+    "postcards",
+    "accessories"
+   ]
+  }
+ ],
+ "categories": [
+  {
+   "slug": "cleansers",
+   "title": "Средства для умывания",
+   "sort": 1000500
+  },
+  {
+   "slug": "makeup-removers",
+   "title": "Для снятия макияжа",
+   "sort": 1000600
+  },
+  {
+   "slug": "tonics-and-hydrolates",
+   "title": "Тоники и гидролаты",
+   "sort": 1000700
+  },
+  {
+   "slug": "facial-serums",
+   "title": "Сыворотки для лица",
+   "sort": 1000800
+  },
+  {
+   "slug": "facial-creams",
+   "title": "Кремы для лица",
+   "sort": 1000900
+  },
+  {
+   "slug": "eye-creams-and-patches",
+   "title": "Кремы для век и патчи",
+   "sort": 1001000
+  },
+  {
+   "slug": "peels-and-enzymes",
+   "title": "Пилинги и энзимы для лица",
+   "sort": 1001100
+  },
+  {
+   "slug": "spf",
+   "title": "SPF и загар",
+   "sort": 1001200
+  },
+  {
+   "slug": "face-masks",
+   "title": "Маски для лица",
+   "sort": 1001300
+  },
+  {
+   "slug": "lip-care",
+   "title": "Уход за губами",
+   "sort": 1001400
+  },
+  {
+   "slug": "brows-and-lashes",
+   "title": "Брови и ресницы",
+   "sort": 1001500
+  },
+  {
+   "slug": "decorative-cosmetics",
+   "title": "Декоративная косметика",
+   "sort": 1001600
+  },
+  {
+   "slug": "accessories",
+   "title": "Аксессуары",
+   "sort": 1001700
+  },
+  {
+   "slug": "body-scrubs",
+   "title": "Скрабы для тела",
+   "sort": 1001800
+  },
+  {
+   "slug": "shower-gel",
+   "title": "Гели для душа",
+   "sort": 1001900
+  },
+  {
+   "slug": "intimate-hygiene",
+   "title": "Интимная гигиена",
+   "sort": 1002000
+  },
+  {
+   "slug": "deodorants",
+   "title": "Дезодоранты",
+   "sort": 1002100
+  },
+  {
+   "slug": "natural-soap",
+   "title": "Натуральное мыло",
+   "sort": 1002200
+  },
+  {
+   "slug": "body-creams",
+   "title": "Кремы для тела",
+   "sort": 1002300
+  },
+  {
+   "slug": "shampoo",
+   "title": "Шампуни",
+   "sort": 1002400
+  },
+  {
+   "slug": "hair-care",
+   "title": "Средства для волос",
+   "sort": 1002500
+  },
+  {
+   "slug": "toothpaste",
+   "title": "Зубные пасты",
+   "sort": 1002600
+  },
+  {
+   "slug": "postcards",
+   "title": "Открытки",
+   "sort": 1002800
+  },
+  {
+   "slug": "georgian-tea",
+   "title": "Грузинский чай",
+   "sort": 1002900
+  },
+  {
+   "slug": "massage-candles",
+   "title": "Массажные свечи",
+   "sort": 1003000
+  },
+  {
+   "slug": "room-spray",
+   "title": "Рум-спреи для дома",
+   "sort": 1003100
+  }
+ ]
+}
