@@ -3,6 +3,7 @@
 @import '@fontsource/philosopher/cyrillic-700.css';
 @import '@fontsource/philosopher/latin-700.css';
 @import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/noto-sans-georgian/index.css';
 
 :root {
   --green: #126662;
@@ -19,8 +20,8 @@
   --line: #e2e0d3;
   --white: #fff;
 
-  --font-display: 'Philosopher', Georgia, serif;
-  --font-body: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Philosopher', 'Noto Sans Georgian Variable', Georgia, serif;
+  --font-body: 'Inter Variable', 'Inter', 'Noto Sans Georgian Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius: 20px;
   --radius-sm: 12px;

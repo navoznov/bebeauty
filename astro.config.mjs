@@ -5,7 +5,7 @@ export default defineConfig({
   base: '/bebeauty',
   trailingSlash: 'always',
   i18n: {
-    locales: ['ru', 'en'],
+    locales: ['ru', 'en', { path: 'ge', codes: ['ka'] }],
     defaultLocale: 'ru',
     routing: { prefixDefaultLocale: false },
   },
