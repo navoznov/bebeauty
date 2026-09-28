@@ -1,5 +1,8 @@
-export type Lang = 'ru' | 'en';
-export const LANGS: Lang[] = ['ru', 'en'];
+export type Lang = 'ru' | 'en' | 'ka';
+export const LANGS: Lang[] = ['ru', 'en', 'ka'];
+
+/** Language names in their own language, for the language switch. */
+export const LANG_NAMES: Record<Lang, string> = { ru: 'Русский', en: 'English', ka: 'ქართული' };
 
 export const FREE_SHIPPING_FROM = 90;
 export const SHIPPING_COST = 9;
@@ -36,7 +39,6 @@ const ru = {
   'nav.close': 'Закрыть',
   'nav.search': 'Поиск',
   'nav.cart': 'Корзина',
-  'lang.switch': 'English',
   'lang.short': 'EN',
 
   'home.h1': 'Натуральная уходовая и декоративная косметика',
@@ -211,7 +213,6 @@ const en: Record<Key, string> = {
   'nav.close': 'Close',
   'nav.search': 'Search',
   'nav.cart': 'Cart',
-  'lang.switch': 'Русский',
   'lang.short': 'RU',
 
   'home.h1': 'Natural skincare and makeup',
@@ -364,7 +365,179 @@ const en: Record<Key, string> = {
   'pcs': 'pcs',
 };
 
-const dict = { ru, en };
+const ka: Record<Key, string> = {
+  'meta.title': 'BeBeauty — ნატურალური კოსმეტიკა თბილისში',
+  'meta.description':
+    'ნატურალური მოვლის და დეკორატიული კოსმეტიკის მაღაზია თბილისში. სერტიფიცირებული ბრენდები, გასაგები შემადგენლობა, მიწოდება მთელ საქართველოში და ოფლაინ მაღაზია.',
+  'skip': 'მთავარ შინაარსზე გადასვლა',
+  'topbar.shipping': `უფასო მიწოდება თბილისში ${FREE_SHIPPING_FROM} ₾-დან`,
+  'topbar.store': 'მაღაზია: ტინა იოსებიძის ქ. 66',
+  'nav.catalog': 'კატალოგი',
+  'nav.new': 'სიახლეები',
+  'nav.sale': 'ფასდაკლება',
+  'nav.georgia': 'Made in Georgia',
+  'nav.info': 'მიწოდება და გადახდა',
+  'nav.contacts': 'კონტაქტი',
+  'nav.returns': 'დაბრუნება და გაცვლა',
+  'nav.privacy': 'კონფიდენციალურობა',
+  'nav.home': 'მთავარი',
+  'nav.menu': 'მენიუ',
+  'nav.close': 'დახურვა',
+  'nav.search': 'ძიება',
+  'nav.cart': 'კალათა',
+  'lang.short': 'KA',
+
+  'home.h1': 'ნატურალური მოვლის და დეკორატიული კოსმეტიკა',
+  'home.lead': 'უსაფრთხო საშუალებები გასაგები შემადგენლობით, შერჩეული ზრუნვითა და ყურადღებით.',
+  'home.cta': 'კატალოგის ნახვა',
+  'home.cta2': 'ფასდაკლება',
+  'home.trust1': 'მიწოდება მთელ საქართველოში',
+  'home.trust2': 'უფასო კონსულტაცია',
+  'home.trust3': 'მაღაზია თბილისში',
+  'home.categories': 'რას ეძებთ?',
+  'home.new': 'სიახლეები',
+  'home.sale': 'ფასდაკლება',
+  'home.all': 'ყველას ნახვა',
+  'home.georgia.title': 'დამზადებულია საქართველოში',
+  'home.georgia.text': 'ხელნაკეთი საპონი, ქართული ჩაი, მასაჟის სანთლები და სახლის არომატები ადგილობრივი ოსტატებისგან.',
+  'home.georgia.cta': 'არჩევა',
+  'home.about.title': 'საუკეთესო ნატურალური კოსმეტიკის სამყაროდან',
+  'home.about.text1':
+    'BeBeauty-ის დამფუძნებელი მარია ყურადღებით არჩევს თითოეულ საშუალებას, რომ შემოგთავაზოთ მხოლოდ ხარისხიანი და ეფექტური პროდუქტები.',
+  'home.about.text2': 'კატალოგში არსებული ყველა ბრენდი სერტიფიცირებულია.',
+  'home.about.cta': 'მაღაზიის შესახებ',
+  'home.brands': 'ბრენდები კატალოგში',
+  'home.insta.title': 'საექსპერტო ბლოგი Instagram-ზე',
+  'home.insta.text':
+    'მარია გიყვებათ სიახლეებზე, შემადგენლობასა და საშუალებების მოქმედებაზე, ასევე იმაზე, როგორ შეარჩიოთ მოვლა თქვენი კანისთვის.',
+  'home.insta.cta': 'გამოწერა',
+  'home.consult.title': 'არ იცით, რა აირჩიოთ?',
+  'home.consult.text': 'მოგვწერეთ — უფასოდ შეგირჩევთ მოვლას თქვენი კანის ტიპისა და საჭიროებების მიხედვით.',
+  'home.consult.cta': 'მოგვწერეთ WhatsApp-ში',
+
+  'benefit.1': 'ნატურალური და უსაფრთხო ინგრედიენტები',
+  'benefit.2': 'მხოლოდ რეალურად მოქმედი საშუალებები',
+  'benefit.3': 'გასაგები შემადგენლობა და ხელმისაწვდომი ფასები',
+  'benefit.4': 'არ ტესტირდება ცხოველებზე',
+
+  'group.face': 'სახე',
+  'group.makeup': 'მაკიაჟი',
+  'group.body': 'სხეული',
+  'group.hair': 'თმა',
+  'group.home': 'სახლი და საჩუქრები',
+
+  'coll.new': 'სიახლეები',
+  'coll.sale': 'ფასდაკლება',
+  'coll.last-chance': 'ბოლო შანსი',
+  'coll.made-in-georgia': 'დამზადებულია საქართველოში',
+
+  'catalog.title': 'კატალოგი',
+  'catalog.all': 'ყველა პროდუქტი',
+  'catalog.search': 'ძიება სახელით ან ბრენდით',
+  'catalog.brand': 'ბრენდი',
+  'catalog.brand.all': 'ყველა ბრენდი',
+  'catalog.inStock': 'მხოლოდ მარაგში',
+  'catalog.sort': 'დალაგება',
+  'catalog.sort.default': 'პოპულარობით',
+  'catalog.sort.priceAsc': 'ჯერ იაფი',
+  'catalog.sort.priceDesc': 'ჯერ ძვირი',
+  'catalog.sort.discount': 'ფასდაკლების ზომით',
+  'catalog.sort.name': 'სახელით',
+  'catalog.found': 'ნაპოვნია',
+  'catalog.more': 'მეტის ჩვენება',
+  'catalog.empty': 'ვერაფერი მოიძებნა. სცადეთ ფილტრების შეცვლა.',
+  'catalog.reset': 'ფილტრების გასუფთავება',
+  'catalog.filters': 'ფილტრები',
+  'catalog.categories': 'კატეგორიები',
+
+  'product.addToCart': 'კალათაში',
+  'product.inCart': 'კალათაშია',
+  'product.soldOut': 'არ არის მარაგში',
+  'product.inStock': 'მარაგშია',
+  'product.fewLeft': 'დარჩა {n} ც.',
+  'product.description': 'აღწერა',
+  'product.readMore': 'სრულად წაკითხვა',
+  'product.readLess': 'შეკეცვა',
+  'product.related': 'შეიძლება მოგეწონოთ',
+  'product.qty': 'რაოდენობა',
+  'product.decrease': 'შემცირება',
+  'product.increase': 'გაზრდა',
+  'product.delivery': `მიწოდება თბილისში — შეკვეთის დღეს ან მომდევნო დღეს. უფასოდ ${FREE_SHIPPING_FROM} ₾-დან, სხვა შემთხვევაში ${SHIPPING_COST} ₾.`,
+  'product.pickup': 'თვითგატანა მაღაზიიდან, ტინა იოსებიძის ქ. 66 — სამ–კვ, 13:00–20:00.',
+  'product.consult': 'ეჭვი გეპარებათ? უფასოდ შეგირჩევთ მოვლას WhatsApp-ში.',
+  'product.brand': 'ბრენდი',
+  'product.photo': 'ფოტო',
+  'product.new': 'სიახლე',
+  'product.sale': 'ფასდაკლება',
+  'product.prev': 'წინა ფოტო',
+  'product.next': 'შემდეგი ფოტო',
+
+  'toast.added': 'დაემატა კალათაში',
+  'toast.goCart': 'გაფორმება',
+
+  'cart.title': 'კალათა',
+  'cart.empty': 'კალათა ჯერ ცარიელია',
+  'cart.emptyCta': 'კატალოგზე გადასვლა',
+  'cart.remove': 'წაშლა',
+  'cart.subtotal': 'პროდუქტები',
+  'cart.shipping': 'მიწოდება',
+  'cart.shippingFree': 'უფასოდ',
+  'cart.shippingPickup': 'თვითგატანა',
+  'cart.shippingLater': 'დააზუსტებს მენეჯერი',
+  'cart.total': 'სულ',
+  'cart.toFree': `თბილისში უფასო მიწოდებამდე დარჩა {n} ₾`,
+  'cart.freeReached': 'მიწოდება თბილისში უფასო იქნება',
+  'cart.unavailable': 'ეს პროდუქტი აღარ არის მარაგში',
+  'cart.checkout': 'შეკვეთის გაფორმება',
+  'cart.name': 'სახელი და გვარი',
+  'cart.delivery': 'მიღების საშუალება',
+  'cart.delivery.tbilisi': 'მიწოდება თბილისში',
+  'cart.delivery.georgia': 'მიწოდება საქართველოში',
+  'cart.delivery.pickup': 'თვითგატანა მაღაზიიდან',
+  'cart.address': 'მიწოდების მისამართი',
+  'cart.city': 'ქალაქი და მისამართი',
+  'cart.contact': 'როგორ დაგიკავშირდეთ?',
+  'cart.phone': 'ტელეფონის ნომერი',
+  'cart.tgNick': 'Telegram-ის მომხმარებლის სახელი',
+  'cart.promo': 'პრომოკოდი',
+  'cart.promoHint': 'მენეჯერი პრომოკოდს შეკვეთის დადასტურებისას გამოიყენებს.',
+  'cart.comment': 'კომენტარი შეკვეთაზე',
+  'cart.consent': 'ვეთანხმები პერსონალური მონაცემების დამუშავებას',
+  'cart.consentLink': 'კონფიდენციალურობის პოლიტიკის შესაბამისად',
+  'cart.payNote':
+    'გადახდა — გადარიცხვით TBC-ის ანგარიშზე მენეჯერის მიერ შეკვეთის დადასტურების შემდეგ, ან ნაღდი ფულით თვითგატანისას. ონლაინ შეკვეთებს ვამუშავებთ 12:00-დან 19:30-მდე.',
+  'cart.submit': 'შეკვეთის გაფორმება',
+  'cart.required': 'შეავსეთ ეს ველი',
+  'cart.success.title': 'გმადლობთ, შეკვეთა მიღებულია!',
+  'cart.success.number': 'შეკვეთის ნომერი',
+  'cart.success.text': 'მენეჯერი სამუშაო დღის განმავლობაში დაგიკავშირდებათ შემადგენლობის, მიწოდების და გადახდის დასადასტურებლად.',
+  'cart.success.demo': 'ეს საიტის სადემონსტრაციო ვერსიაა: შეკვეთა არსად გაგზავნილა.',
+  'cart.success.back': 'კატალოგში დაბრუნება',
+  'cart.optional': 'არასავალდებულო',
+
+  'footer.about': 'ნატურალური კოსმეტიკის მაღაზია თბილისში. 2021 წლიდან.',
+  'footer.shop': 'მაღაზია',
+  'footer.help': 'მყიდველებს',
+  'footer.contacts': 'კონტაქტი',
+  'footer.hours': 'სამ–კვ 13:00–20:00, ორშაბათი — დასვენების დღე',
+  'footer.address': 'თბილისი, ტინა იოსებიძის ქ. 66',
+  'footer.map': 'რუკაზე ნახვა',
+
+  'contacts.title': 'კონტაქტი',
+  'contacts.hours': 'სამუშაო საათები',
+  'contacts.hoursValue': 'სამშაბათი — კვირა, 13:00–20:00\nორშაბათი — დასვენების დღე',
+  'contacts.address': 'მაღაზიის მისამართი',
+  'contacts.write': 'მოგვწერეთ',
+  'contacts.writeText': 'ვუპასუხებთ თქვენს კითხვებს და უფასოდ დაგეხმარებით მოვლის შერჩევაში.',
+
+  'info.title': 'მიწოდება და გადახდა',
+  '404.title': 'გვერდი ვერ მოიძებნა',
+  '404.text': 'შესაძლოა, პროდუქტი გაიყიდა ან ბმული მოძველებულია.',
+  'currency': '₾',
+  'pcs': 'ც.',
+};
+
+const dict = { ru, en, ka };
 
 export function useT(lang: Lang) {
   return (key: Key, vars?: Record<string, string | number>) => {
@@ -376,10 +549,13 @@ export function useT(lang: Lang) {
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
+/** URL prefix per language; Georgian lives under /ge/ although its language code is "ka". */
+const PREFIX: Record<Lang, string> = { ru: '', en: '/en', ka: '/ge' };
+
 /** Localized, base-prefixed URL for an internal path like "/catalog/". */
 export function href(lang: Lang, path = '/') {
   const p = path.startsWith('/') ? path : `/${path}`;
-  return `${BASE}${lang === 'en' ? '/en' : ''}${p}`;
+  return `${BASE}${PREFIX[lang]}${p}`;
 }
 
 /** Base-prefixed URL for a static asset in /public. */

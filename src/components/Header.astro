@@ -2,7 +2,7 @@
 import { Image } from 'astro:assets';
 import Icon from './Icon.astro';
 import mascot from '../assets/brand/mascot.png';
-import { useT, href, type Lang } from '../i18n/ui';
+import { useT, href, LANGS, LANG_NAMES, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
@@ -11,7 +11,7 @@ interface Props {
 
 const { lang, path } = Astro.props;
 const t = useT(lang);
-const other: Lang = lang === 'ru' ? 'en' : 'ru';
+const others = LANGS.filter((l) => l !== lang);
 
 const nav = [
   { label: t('nav.catalog'), to: '/catalog/' },
@@ -28,9 +28,16 @@ const isActive = (to: string) => (to === '/catalog/' ? path === to : path.starts
   <div class="container topbar-inner">
     <p class="topbar-ship"><Icon name="truck" size={18} />{t('topbar.shipping')}</p>
     <p class="topbar-store"><Icon name="pin" size={18} />{t('topbar.store')}</p>
-    <a class="lang" href={href(other, path)} hreflang={other} lang={other}>
-      <Icon name="globe" size={18} />{t('lang.switch')}
-    </a>
+    <p class="lang">
+      <Icon name="globe" size={18} />
+      {
+        others.map((l) => (
+          <a href={href(l, path)} hreflang={l} lang={l}>
+            {LANG_NAMES[l]}
+          </a>
+        ))
+      }
+    </p>
   </div>
 </div>
 
@@ -79,9 +86,14 @@ const isActive = (to: string) => (to === '/catalog/' ? path === to : path.starts
     <a href={href(lang, '/returns/')}>{t('nav.returns')}</a>
   </nav>
   <div class="drawer-foot">
-    <a class="btn btn-pink btn-block" href={href(other, path)} hreflang={other} lang={other}>
-      <Icon name="globe" size={20} />{t('lang.switch')}
-    </a>
+    {
+      others.map((l) => (
+        <a class="btn btn-pink btn-block" href={href(l, path)} hreflang={l} lang={l}>
+          <Icon name="globe" size={20} />
+          {LANG_NAMES[l]}
+        </a>
+      ))
+    }
     <p>{t('topbar.shipping')}</p>
   </div>
 </dialog>
@@ -116,15 +128,15 @@ const isActive = (to: string) => (to === '/catalog/' ? path === to : path.starts
   .topbar-store {
     opacity: 0.8;
   }
-  .lang {
+  .topbar .lang {
     margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    gap: 12px;
+  }
+  .lang a {
     text-decoration: none;
     padding: 4px 0;
   }
-  .lang:hover {
+  .lang a:hover {
     text-decoration: underline;
   }
 

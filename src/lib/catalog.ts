@@ -1,6 +1,7 @@
 import rawProducts from '../data/products.json';
 import rawCategories from '../data/categories.json';
 import en from '../data/en.json';
+import ka from '../data/ka.json';
 import { asset, type Lang } from '../i18n/ui';
 
 export interface Product {
@@ -30,16 +31,18 @@ export interface Group {
   categories: Category[];
 }
 
-const translations = en as {
+interface Translations {
   categories: Record<string, string>;
   products: Record<string, { title?: string; description?: string }>;
-};
+}
+
+const translations: Record<Exclude<Lang, 'ru'>, Translations> = { en, ka };
 
 export function getProducts(lang: Lang): Product[] {
   const list = rawProducts as Product[];
   if (lang === 'ru') return list;
   return list.map((p) => {
-    const tr = translations.products[p.id];
+    const tr = translations[lang].products[p.id];
     return tr ? { ...p, title: tr.title ?? p.title, description: tr.description ?? p.description } : p;
   });
 }
@@ -49,7 +52,7 @@ export function getCategories(lang: Lang): Category[] {
   return rawCategories.categories
     .map((c) => ({
       slug: c.slug,
-      title: lang === 'en' ? translations.categories[c.slug] ?? c.title : c.title,
+      title: lang === 'ru' ? c.title : translations[lang].categories[c.slug] ?? c.title,
       count: products.filter((p) => p.categories.includes(c.slug)).length,
     }))
     .filter((c) => c.count > 0);
