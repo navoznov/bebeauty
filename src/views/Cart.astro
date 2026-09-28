@@ -1,0 +1,594 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getProducts, imageUrl } from '../lib/catalog';
+import { useT, href, FREE_SHIPPING_FROM, SHIPPING_COST, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useT(lang);
+
+const index = Object.fromEntries(
+  getProducts(lang).map((p) => [
+    p.id,
+    { title: p.title, brand: p.brand, price: p.price, old: p.priceOld, stock: p.stock, url: href(lang, `/product/${p.slug}/`), img: imageUrl(p, 0, 400) },
+  ]),
+);
+
+const strings = {
+  remove: t('cart.remove'),
+  decrease: t('product.decrease'),
+  increase: t('product.increase'),
+  unavailable: t('cart.unavailable'),
+  free: t('cart.shippingFree'),
+  pickup: t('cart.shippingPickup'),
+  later: t('cart.shippingLater'),
+  toFree: t('cart.toFree'),
+  freeReached: t('cart.freeReached'),
+};
+---
+
+<Base lang={lang} path="/cart/" title={t('cart.title')} noindex>
+  <div class="container page">
+    <h1>{t('cart.title')}</h1>
+
+    <div class="empty" data-empty hidden>
+      <Icon name="cart" size={48} />
+      <p>{t('cart.empty')}</p>
+      <a class="btn" href={href(lang, '/catalog/')}>{t('cart.emptyCta')}</a>
+    </div>
+
+    <div class="success" data-success hidden>
+      <div class="success-icon"><Icon name="check" size={40} /></div>
+      <h2>{t('cart.success.title')}</h2>
+      <p class="order-no">{t('cart.success.number')}: <strong data-order-no></strong></p>
+      <p>{t('cart.success.text')}</p>
+      <p class="demo-note">{t('cart.success.demo')}</p>
+      <a class="btn" href={href(lang, '/catalog/')}>{t('cart.success.back')}</a>
+    </div>
+
+    <div class="cart" data-cart hidden>
+      <div class="items-col">
+        <div class="free-bar" data-free-bar>
+          <p data-free-text></p>
+          <div class="bar"><span data-free-progress></span></div>
+        </div>
+        <ul class="items" data-items></ul>
+      </div>
+
+      <form class="checkout" data-checkout novalidate>
+        <h2>{t('cart.checkout')}</h2>
+
+        <label class="field">
+          <span>{t('cart.name')}</span>
+          <input class="input" name="name" autocomplete="name" required />
+        </label>
+
+        <fieldset class="field">
+          <legend class="legend">{t('cart.delivery')}</legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="delivery" value="tbilisi" checked /><span>{t('cart.delivery.tbilisi')}</span></label>
+            <label class="choice"><input type="radio" name="delivery" value="georgia" /><span>{t('cart.delivery.georgia')}</span></label>
+            <label class="choice"><input type="radio" name="delivery" value="pickup" /><span>{t('cart.delivery.pickup')}</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field" data-address>
+          <span data-address-label data-tbilisi={t('cart.address')} data-georgia={t('cart.city')}>{t('cart.address')}</span>
+          <input class="input" name="address" autocomplete="street-address" required />
+        </label>
+
+        <fieldset class="field">
+          <legend class="legend">{t('cart.contact')}</legend>
+          <div class="choices choices-row">
+            <label class="choice"><input type="radio" name="contact" value="whatsapp" checked /><span>WhatsApp</span></label>
+            <label class="choice"><input type="radio" name="contact" value="telegram" /><span>Telegram</span></label>
+            <label class="choice"><input type="radio" name="contact" value="sms" /><span>SMS</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span data-contact-label data-phone={t('cart.phone')} data-tg={t('cart.tgNick')}>{t('cart.phone')}</span>
+          <input class="input" name="contactValue" type="tel" autocomplete="tel" placeholder="+995 5__ ___ ___" required />
+        </label>
+
+        <details class="extra">
+          <summary>{t('cart.promo')} · {t('cart.comment').toLowerCase()} <span class="opt">({t('cart.optional')})</span></summary>
+          <label class="field">
+            <span>{t('cart.promo')}</span>
+            <input class="input" name="promo" autocomplete="off" />
+            <small>{t('cart.promoHint')}</small>
+          </label>
+          <label class="field">
+            <span>{t('cart.comment')}</span>
+            <textarea class="input" name="comment" rows="3"></textarea>
+          </label>
+        </details>
+
+        <dl class="summary">
+          <div><dt>{t('cart.subtotal')}</dt><dd data-subtotal></dd></div>
+          <div><dt>{t('cart.shipping')}</dt><dd data-shipping></dd></div>
+          <div class="total"><dt>{t('cart.total')}</dt><dd data-total></dd></div>
+        </dl>
+
+        <label class="consent">
+          <input type="checkbox" name="consent" required />
+          <span>{t('cart.consent')} <a href={href(lang, '/privacy/')} target="_blank">{t('cart.consentLink')}</a></span>
+        </label>
+
+        <p class="pay-note"><Icon name="card" size={20} />{t('cart.payNote')}</p>
+
+        <button class="btn btn-block" type="submit">{t('cart.submit')}</button>
+        <p class="error" data-error role="alert" hidden>{t('cart.required')}</p>
+      </form>
+    </div>
+  </div>
+  <script is:inline type="application/json" id="cart-data" set:html={JSON.stringify({ index, strings, free: FREE_SHIPPING_FROM, cost: SHIPPING_COST })} />
+</Base>
+
+<script>
+  import { readCart, setQty, clearCart } from '../scripts/cart';
+  import { formatPrice } from '../i18n/ui';
+
+  type Item = { title: string; brand: string | null; price: number; old: number | null; stock: number; url: string; img: string };
+  const data = JSON.parse(document.getElementById('cart-data')!.textContent!) as {
+    index: Record<string, Item>;
+    strings: Record<string, string>;
+    free: number;
+    cost: number;
+  };
+  const { index, strings: s } = data;
+
+  const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+  const form = $<HTMLFormElement>('[data-checkout]');
+  const esc = (v: string) => v.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  function delivery() {
+    return (form.elements.namedItem('delivery') as RadioNodeList).value;
+  }
+
+  function render() {
+    const cart = readCart();
+    const ids = Object.keys(cart).filter((id) => index[id]);
+    $('[data-empty]').hidden = ids.length > 0 || !$('[data-success]').hidden;
+    $('[data-cart]').hidden = ids.length === 0;
+    if (!ids.length) return;
+
+    let subtotal = 0;
+    $('[data-items]').innerHTML = ids
+      .map((id) => {
+        const p = index[id];
+        const qty = cart[id];
+        const ok = p.stock > 0;
+        if (ok) subtotal += p.price * qty;
+        return `<li class="item${ok ? '' : ' is-out'}">
+          <a href="${p.url}" class="item-img"><img src="${p.img}" alt="" width="96" height="96"></a>
+          <div class="item-info">
+            ${p.brand ? `<p class="item-brand">${esc(p.brand)}</p>` : ''}
+            <a href="${p.url}" class="item-title">${esc(p.title)}</a>
+            ${ok ? '' : `<p class="item-warn">${s.unavailable}</p>`}
+            <div class="item-row">
+              <div class="qty" role="group">
+                <button type="button" data-dec="${id}" aria-label="${s.decrease}" ${ok ? '' : 'disabled'}>−</button>
+                <span>${qty}</span>
+                <button type="button" data-inc="${id}" aria-label="${s.increase}" ${ok && qty < p.stock ? '' : 'disabled'}>+</button>
+              </div>
+              <p class="item-price">${formatPrice(p.price * qty)}${p.old ? ` <s>${formatPrice(p.old * qty)}</s>` : ''}</p>
+            </div>
+          </div>
+          <button type="button" class="item-remove" data-remove="${id}" aria-label="${s.remove}">×</button>
+        </li>`;
+      })
+      .join('');
+
+    const d = delivery();
+    const shipping = d === 'tbilisi' ? (subtotal >= data.free ? 0 : data.cost) : 0;
+    $('[data-subtotal]').textContent = formatPrice(subtotal);
+    $('[data-shipping]').textContent =
+      d === 'pickup' ? s.pickup : d === 'georgia' ? s.later : shipping === 0 ? s.free : formatPrice(shipping);
+    $('[data-total]').textContent = formatPrice(subtotal + shipping);
+
+    const left = Math.max(0, data.free - subtotal);
+    $('[data-free-bar]').hidden = d !== 'tbilisi';
+    $('[data-free-text]').textContent = left > 0 ? s.toFree.replace('{n}', String(Math.round(left * 100) / 100)) : s.freeReached;
+    $('[data-free-progress]').style.width = `${Math.min(100, (subtotal / data.free) * 100)}%`;
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-inc],[data-dec],[data-remove]');
+    if (!el) return;
+    const cart = readCart();
+    if (el.dataset.inc) setQty(el.dataset.inc, cart[el.dataset.inc] + 1, index[el.dataset.inc].stock);
+    if (el.dataset.dec) setQty(el.dataset.dec, Math.max(1, cart[el.dataset.dec] - 1));
+    if (el.dataset.remove) setQty(el.dataset.remove, 0);
+  });
+
+  function syncFields() {
+    const d = delivery();
+    const addr = $('[data-address]');
+    const addrInput = addr.querySelector('input')!;
+    addr.hidden = d === 'pickup';
+    addrInput.required = d !== 'pickup';
+    const label = $('[data-address-label]');
+    label.textContent = d === 'georgia' ? label.dataset.georgia! : label.dataset.tbilisi!;
+
+    const contact = (form.elements.namedItem('contact') as RadioNodeList).value;
+    const input = form.elements.namedItem('contactValue') as HTMLInputElement;
+    const cl = $('[data-contact-label]');
+    const tg = contact === 'telegram';
+    cl.textContent = tg ? cl.dataset.tg! : cl.dataset.phone!;
+    input.type = tg ? 'text' : 'tel';
+    input.autocomplete = tg ? 'username' : 'tel';
+    input.placeholder = tg ? '@username' : '+995 5__ ___ ___';
+  }
+
+  form.addEventListener('change', () => {
+    syncFields();
+    render();
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const invalid = [...form.querySelectorAll<HTMLInputElement>('input[required]')].filter(
+      (i) => !i.closest('[hidden]') && !i.checkValidity(),
+    );
+    form.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+    invalid.forEach((i) => i.closest('.field, .consent')?.classList.add('is-invalid'));
+    $('[data-error]').hidden = invalid.length === 0;
+    if (invalid.length) {
+      invalid[0].focus();
+      return;
+    }
+    $('[data-order-no]').textContent = `BB-${Date.now().toString().slice(-6)}`;
+    $('[data-success]').hidden = false;
+    $('[data-cart]').hidden = true;
+    clearCart();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  syncFields();
+  render();
+  window.addEventListener('cart:change', render);
+</script>
+
+<style>
+  .page {
+    padding-block: 32px 80px;
+  }
+  h1 {
+    color: var(--green);
+  }
+  .empty,
+  .success {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    max-width: 560px;
+    margin: 24px auto;
+    padding: 48px 32px;
+    text-align: center;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .empty :global(svg) {
+    color: var(--pink);
+  }
+  .success-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .success h2 {
+    color: var(--green);
+  }
+  .order-no {
+    font-size: 18px;
+  }
+  .demo-note {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: var(--pink-50);
+    color: var(--berry);
+    font-size: 14px;
+  }
+
+  .cart {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+  }
+  .free-bar {
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    background: var(--cream);
+    margin-bottom: 16px;
+  }
+  .free-bar p {
+    margin: 0 0 8px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .bar {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--white);
+    overflow: hidden;
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+    background: var(--green);
+    border-radius: inherit;
+    transition: width 0.3s;
+  }
+  .items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .items :global(.item) {
+    position: relative;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 16px;
+    padding: 16px 48px 16px 16px;
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+  }
+  .items :global(.item.is-out) {
+    opacity: 0.6;
+  }
+  .items :global(.item-img img) {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+  }
+  .items :global(.item-brand) {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .items :global(.item-title) {
+    display: block;
+    text-decoration: none;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+  .items :global(.item-warn) {
+    margin: 4px 0 0;
+    color: var(--berry);
+    font-size: 14px;
+  }
+  .items :global(.item-row) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .items :global(.qty) {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+  }
+  .items :global(.qty button) {
+    width: 40px;
+    height: 38px;
+    border: 0;
+    background: none;
+    font-size: 20px;
+    color: var(--green);
+    cursor: pointer;
+  }
+  .items :global(.qty button:disabled) {
+    color: #b5bdbb;
+    cursor: default;
+  }
+  .items :global(.qty span) {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .items :global(.item-price) {
+    margin: 0;
+    font-weight: 700;
+    font-size: 17px;
+  }
+  .items :global(.item-price s) {
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .items :global(.item-remove) {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    font-size: 24px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .items :global(.item-remove:hover) {
+    background: var(--pink-50);
+    color: var(--berry);
+  }
+
+  .checkout {
+    position: sticky;
+    top: 96px;
+    display: grid;
+    gap: 18px;
+    padding: clamp(20px, 3vw, 32px);
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .checkout h2 {
+    font-size: 26px;
+    margin: 0;
+  }
+  fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+  }
+  .choices {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .choices-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .choice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 15px;
+  }
+  .choice:has(input:checked) {
+    border-color: var(--green);
+    background: var(--green-100);
+  }
+  .choice input {
+    accent-color: var(--green);
+    width: 18px;
+    height: 18px;
+    margin: 0;
+  }
+  .field small {
+    color: var(--muted);
+  }
+  .extra summary {
+    cursor: pointer;
+    color: var(--green);
+    font-weight: 600;
+  }
+  .extra[open] summary {
+    margin-bottom: 12px;
+  }
+  .extra .field + .field {
+    margin-top: 12px;
+  }
+  .opt {
+    font-weight: 400;
+    color: var(--muted);
+  }
+  textarea.input {
+    resize: vertical;
+  }
+  .summary {
+    margin: 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--line);
+    display: grid;
+    gap: 6px;
+  }
+  .summary div {
+    display: flex;
+    justify-content: space-between;
+  }
+  .summary dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .summary .total {
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .consent {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .consent input {
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--green);
+    flex: none;
+  }
+  .consent a {
+    color: var(--green);
+  }
+  .pay-note {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--cream);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .pay-note :global(svg) {
+    flex: none;
+    color: var(--green);
+  }
+  .is-invalid .input,
+  .is-invalid.consent span {
+    border-color: var(--berry);
+    color: var(--berry);
+  }
+  .is-invalid .input {
+    color: var(--ink);
+  }
+  .error {
+    margin: 0;
+    color: var(--berry);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .cart {
+      grid-template-columns: 1fr;
+    }
+    .checkout {
+      position: static;
+    }
+  }
+  @media (max-width: 480px) {
+    .items :global(.item) {
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
+      padding: 12px 40px 12px 12px;
+    }
+    .items :global(.item-img img) {
+      width: 72px;
+      height: 72px;
+    }
+    .choices-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,34 @@
+---
+// Brand leaf ornaments. Rendered as a CSS mask over an external SVG so the file is cached
+// across pages (inlining them added ~45 KB to every page) while still taking `color`.
+import leaf5 from '../icons/leaf-5.svg?url';
+import leaf6 from '../icons/leaf-6.svg?url';
+import leaf7 from '../icons/leaf-7.svg?url';
+import leaf8 from '../icons/leaf-8.svg?url';
+import leaf9 from '../icons/leaf-9.svg?url';
+
+interface Props {
+  variant: 5 | 6 | 7 | 8 | 9;
+  size?: number;
+  class?: string;
+}
+
+const urls = { 5: leaf5, 6: leaf6, 7: leaf7, 8: leaf8, 9: leaf9 };
+const { variant, size = 40, class: cls } = Astro.props;
+---
+
+<span
+  class:list={['leaf', cls]}
+  aria-hidden="true"
+  style={`width:${size}px;height:${size}px;--leaf:url("${urls[variant]}")`}
+></span>
+
+<style>
+  .leaf {
+    display: inline-block;
+    flex: none;
+    background: currentColor;
+    -webkit-mask: var(--leaf) center / contain no-repeat;
+    mask: var(--leaf) center / contain no-repeat;
+  }
+</style>

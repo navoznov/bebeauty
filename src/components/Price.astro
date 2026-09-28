@@ -1,0 +1,44 @@
+---
+import { formatPrice } from '../i18n/ui';
+
+interface Props {
+  price: number;
+  old?: number | null;
+  size?: 'md' | 'lg';
+}
+
+const { price, old, size = 'md' } = Astro.props;
+---
+
+<p class:list={['price', `price-${size}`, { 'is-sale': old }]}>
+  <span class="now">{formatPrice(price)}</span>
+  {old && <s class="old">{formatPrice(old)}</s>}
+</p>
+
+<style>
+  .price {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0;
+  }
+  .now {
+    font-weight: 700;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+  }
+  .is-sale .now {
+    color: var(--berry);
+  }
+  .old {
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .price-lg .now {
+    font-size: 30px;
+  }
+  .price-lg .old {
+    font-size: 18px;
+  }
+</style>

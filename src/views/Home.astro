@@ -1,0 +1,495 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Leaf from '../components/Leaf.astro';
+import ProductCard from '../components/ProductCard.astro';
+import hero from '../assets/brand/hero.png';
+import promo from '../assets/brand/promo.png';
+import insta1 from '../assets/brand/insta-4200.jpg';
+import insta2 from '../assets/brand/insta-4201.jpg';
+import insta3 from '../assets/brand/insta-4202.jpg';
+import { getProducts, getGroups, getBrands, byAvailability, imageUrl } from '../lib/catalog';
+import { useT, href, CONTACTS, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useT(lang);
+const products = getProducts(lang);
+const inStock = products.filter((p) => p.stock > 0);
+
+const newItems = inStock.filter((p) => p.collections.includes('new')).slice(0, 10);
+const saleItems = inStock.filter((p) => p.priceOld && !newItems.includes(p)).slice(0, 10);
+const brands = getBrands(products);
+
+// One representative in-stock product photo per group for the category tiles.
+const groupLeaf = { face: 6, makeup: 7, body: 8, hair: 9, home: 5 } as const;
+const groups = getGroups(lang).map((g) => {
+  const slugs = g.categories.map((c) => c.slug);
+  const items = products.filter((p) => p.categories.some((c) => slugs.includes(c))).sort(byAvailability);
+  return { ...g, count: items.length, cover: items[0] };
+});
+---
+
+<Base lang={lang} path="/">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1>{t('home.h1')}</h1>
+        <p class="lead">{t('home.lead')}</p>
+        <div class="hero-cta">
+          <a class="btn btn-cream" href={href(lang, '/catalog/')}>{t('home.cta')}</a>
+          <a class="btn btn-outline-light" href={href(lang, '/catalog/sale/')}>{t('home.cta2')}</a>
+        </div>
+        <ul class="trust">
+          <li><Icon name="truck" size={20} />{t('home.trust1')}</li>
+          <li><Icon name="chat" size={20} />{t('home.trust2')}</li>
+          <li><Icon name="store" size={20} />{t('home.trust3')}</li>
+        </ul>
+      </div>
+      <div class="hero-art">
+        <Image src={hero} alt="" widths={[480, 800, 1100]} sizes="(max-width: 860px) 90vw, 560px" loading="eager" fetchpriority="high" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{t('home.categories')}</h2>
+        <a class="link-arrow" href={href(lang, '/catalog/')}>{t('catalog.all')}</a>
+      </div>
+      <div class="groups">
+        {
+          groups.map((g) => (
+            <div class="group">
+              <a class="group-main" href={href(lang, `/catalog/${g.categories[0].slug}/`)}>
+                {g.cover && <img src={imageUrl(g.cover, 0, 400)} alt="" width="400" height="400" loading="lazy" />}
+                <span class="group-title">
+                  <Leaf variant={groupLeaf[g.id as keyof typeof groupLeaf]} size={28} />
+                  {t(`group.${g.id}` as 'group.face')}
+                </span>
+              </a>
+              <ul class="group-links">
+                {g.categories.map((c) => (
+                  <li>
+                    <a href={href(lang, `/catalog/${c.slug}/`)}>{c.title}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-tint">
+    <div class="container">
+      <div class="section-head">
+        <h2>{t('home.new')}</h2>
+        <a class="link-arrow" href={href(lang, '/catalog/new/')}>{t('home.all')}</a>
+      </div>
+      <div class="scroller">
+        {newItems.map((p) => <ProductCard product={p} lang={lang} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{t('home.sale')}</h2>
+        <a class="link-arrow" href={href(lang, '/catalog/sale/')}>{t('home.all')}</a>
+      </div>
+      <div class="scroller">
+        {saleItems.map((p) => <ProductCard product={p} lang={lang} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="georgia">
+      <Leaf variant={5} size={120} class="georgia-leaf" />
+      <div>
+        <h2>{t('home.georgia.title')}</h2>
+        <p>{t('home.georgia.text')}</p>
+      </div>
+      <a class="btn btn-cream" href={href(lang, '/catalog/made-in-georgia/')}>{t('home.georgia.cta')}</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container about">
+      <div class="about-copy">
+        <h2>{t('home.about.title')}</h2>
+        <p>{t('home.about.text1')}</p>
+        <p>{t('home.about.text2')}</p>
+        <a class="btn btn-outline" href={href(lang, '/info/#about')}>{t('home.about.cta')}</a>
+      </div>
+      <div class="about-art">
+        <Image src={promo} alt="" widths={[400, 700]} sizes="(max-width: 860px) 90vw, 480px" />
+      </div>
+    </div>
+    <div class="container brands">
+      <p class="brands-title">{t('home.brands')}</p>
+      <ul>
+        {
+          brands.map((b) => (
+            <li>
+              <a href={`${href(lang, '/catalog/')}?brand=${encodeURIComponent(b)}`}>{b}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section insta-section">
+    <div class="container insta">
+      <div class="insta-copy">
+        <h2>{t('home.insta.title')}</h2>
+        <p>{t('home.insta.text')}</p>
+        <a class="btn btn-pink" href={CONTACTS.instagramHref} target="_blank" rel="noopener">
+          <Icon name="instagram" size={20} />{t('home.insta.cta')} {CONTACTS.instagram}
+        </a>
+      </div>
+      <div class="insta-photos">
+        {
+          [insta1, insta2, insta3].map((img) => (
+            <a href={CONTACTS.instagramHref} target="_blank" rel="noopener" aria-label="Instagram">
+              <Image src={img} alt="" widths={[240, 420]} sizes="(max-width: 560px) 45vw, 240px" />
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="consult">
+        <div>
+          <h2>{t('home.consult.title')}</h2>
+          <p>{t('home.consult.text')}</p>
+        </div>
+        <a class="btn" href={CONTACTS.phoneHref} target="_blank" rel="noopener">
+          <Icon name="whatsapp" size={20} />{t('home.consult.cta')}
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    background: var(--green);
+    color: var(--white);
+    overflow: hidden;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    align-items: center;
+    gap: 32px;
+    padding-block: clamp(32px, 6vw, 72px);
+  }
+  .hero h1 {
+    text-transform: uppercase;
+    font-weight: 400;
+    color: var(--cream);
+  }
+  .lead {
+    font-size: clamp(17px, 1.6vw, 20px);
+    max-width: 34em;
+    opacity: 0.92;
+  }
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 28px 0 32px;
+  }
+  .trust {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    font-size: 14px;
+  }
+  .trust li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .trust :global(svg) {
+    color: var(--pink);
+  }
+  .hero-art img {
+    width: 100%;
+    height: auto;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .group {
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .group-main {
+    display: block;
+    text-decoration: none;
+  }
+  .group-main img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    padding: 16px;
+    background: var(--white);
+    transition: transform 0.3s;
+  }
+  .group-main:hover img {
+    transform: scale(1.04);
+  }
+  .group-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 18px 6px;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+  }
+  .group-links {
+    list-style: none;
+    margin: 0;
+    padding: 4px 18px 18px;
+    display: grid;
+    gap: 4px;
+    font-size: 14px;
+  }
+  .group-links a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .group-links a:hover {
+    color: var(--green);
+    text-decoration: underline;
+  }
+
+  .section-tint {
+    background: var(--cream);
+  }
+
+  .georgia {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 32px;
+    padding: clamp(28px, 4vw, 48px);
+    border-radius: var(--radius);
+    background: var(--green);
+    color: var(--white);
+    overflow: hidden;
+  }
+  .georgia h2 {
+    color: var(--cream);
+  }
+  .georgia p {
+    margin: 0;
+    max-width: 40em;
+    opacity: 0.92;
+  }
+  .georgia :global(.georgia-leaf) {
+    color: var(--pink);
+  }
+
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(24px, 5vw, 64px);
+    align-items: center;
+    background: var(--pink);
+    border-radius: var(--radius);
+    padding: clamp(28px, 5vw, 56px);
+    max-width: calc(var(--container) - var(--gutter) * 2);
+  }
+  .about h2 {
+    color: var(--green);
+    text-transform: uppercase;
+  }
+  .about-art img {
+    width: 100%;
+    height: auto;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+  .brands {
+    margin-top: 32px;
+    text-align: center;
+  }
+  .brands-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .brands ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 14px;
+  }
+  .brands a {
+    display: inline-block;
+    padding: 10px 20px;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--green);
+    text-decoration: none;
+    background: var(--white);
+    transition: border-color 0.15s;
+  }
+  .brands a:hover {
+    border-color: var(--green);
+  }
+
+  .insta-section {
+    background: var(--green);
+    color: var(--white);
+  }
+  .insta {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: clamp(24px, 5vw, 64px);
+    align-items: center;
+  }
+  .insta h2 {
+    color: var(--cream);
+    text-transform: uppercase;
+  }
+  .insta-copy p {
+    opacity: 0.92;
+    margin-bottom: 24px;
+  }
+  .insta-photos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .insta-photos img {
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    object-fit: cover;
+    border-radius: var(--radius);
+    transition: transform 0.3s;
+  }
+  .insta-photos a:hover img {
+    transform: scale(1.02);
+  }
+
+  .consult {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: clamp(24px, 4vw, 40px);
+    border: 2px dashed var(--pink);
+    border-radius: var(--radius);
+    background: var(--white);
+  }
+  .consult h2 {
+    color: var(--green);
+  }
+  .consult p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  @media (max-width: 1080px) {
+    .groups {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 860px) {
+    .hero-grid,
+    .about,
+    .insta {
+      grid-template-columns: 1fr;
+    }
+    .hero-art {
+      order: -1;
+    }
+    .hero-art img {
+      max-width: 360px;
+    }
+    .georgia {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .georgia :global(.georgia-leaf) {
+      position: absolute;
+      right: -16px;
+      top: -16px;
+      opacity: 0.35;
+    }
+    .consult {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  @media (max-width: 560px) {
+    .groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .group-title {
+      font-size: 19px;
+      padding: 12px 12px 4px;
+    }
+    .group-links {
+      display: none;
+    }
+    .group:last-child:nth-child(odd) {
+      grid-column: span 2;
+    }
+    .group:last-child:nth-child(odd) .group-main img {
+      aspect-ratio: 8 / 3;
+    }
+    .group-main {
+      padding-bottom: 8px;
+    }
+    .hero-art img {
+      max-width: 280px;
+    }
+    .insta-photos {
+      gap: 8px;
+    }
+    .insta-photos img {
+      border-radius: var(--radius-sm);
+    }
+  }
+</style>

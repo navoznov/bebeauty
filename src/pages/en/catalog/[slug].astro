@@ -1,0 +1,10 @@
+---
+import Catalog from '../../../views/Catalog.astro';
+import { getCategories, COLLECTIONS } from '../../../lib/catalog';
+
+export function getStaticPaths() {
+  return [...COLLECTIONS, ...getCategories('en').map((c) => c.slug)].map((slug) => ({ params: { slug } }));
+}
+---
+
+<Catalog lang="en" slug={Astro.params.slug} />
